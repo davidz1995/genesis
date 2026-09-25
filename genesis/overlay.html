@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Genesis overlay</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+    }
+    #caption {
+      position: fixed;
+      left: 50%;
+      bottom: 8%;
+      transform: translateX(-50%);
+      max-width: 80%;
+      box-sizing: border-box;
+      padding: 0.35em 0.7em;
+      border-radius: 0.35em;
+      background: rgba(0, 0, 0, 0.62);
+      color: #fff;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 42px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    #caption.partial { opacity: 0.72; }
+    #caption.final { opacity: 1; }
+    #caption:empty { display: none; }
+  </style>
+</head>
+<body>
+  <div id="caption"></div>
+  <script>
+    const sessionId = new URLSearchParams(location.search).get("session_id");
+    const caption = document.getElementById("caption");
+    if (sessionId) {
+      const source = new EventSource("/v1/sessions/" + encodeURIComponent(sessionId) + "/subtitles");
+      source.onmessage = (message) => {
+        const event = JSON.parse(message.data);
+        caption.textContent = event.text || "";
+        caption.className = event.is_final ? "final" : "partial";
+      };
+    }
+  </script>
+</body>
+</html>
