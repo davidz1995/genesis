@@ -1,3 +1,5 @@
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket
@@ -9,11 +11,22 @@ from genesis.models import validate_session_id
 from genesis.routes.audio import ingest_audio
 from genesis.routes.stream import stream_subtitles
 from genesis.settings import load_settings
+from genesis.tracing import Tracing
 
-app = FastAPI(title="Genesis Subtitling")
 _settings = load_settings()
+_tracing = Tracing.from_env(_settings.gemini_model)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    yield
+    await asyncio.to_thread(app.state.tracing.shutdown)
+
+
+app = FastAPI(title="Genesis Subtitling", lifespan=_lifespan)
 app.state.bus = InProcessBus()
-app.state.engine = GeminiEngine(_settings.gemini_api_key, _settings.gemini_model)
+app.state.tracing = _tracing
+app.state.engine = GeminiEngine(_settings.gemini_api_key, _settings.gemini_model, _tracing)
 _OVERLAY = (Path(__file__).parent / "overlay.html").read_text(encoding="utf-8")
 
 

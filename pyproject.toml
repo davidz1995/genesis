@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115",
   "google-genai>=1.0",
+  "langfuse>=3",
   "uvicorn>=0.32",
   "websockets>=13",
 ]
